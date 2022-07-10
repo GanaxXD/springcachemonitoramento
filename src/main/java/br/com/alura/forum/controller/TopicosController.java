@@ -8,6 +8,7 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -102,6 +103,38 @@ public class TopicosController {
 		 * o atributo que será usado para ordenar os registro.
 		 */
 		Pageable paginacao = PageRequest.of(page, qtd, Direction.ASC, ordenacao);
+		
+		if (nomeCurso == null) {			
+			Page<Topico> topicos = topicoRepository.findAll(paginacao);
+			return TopicoDto.converter(topicos);
+		} else {
+			Page<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso, paginacao);
+			return TopicoDto.converter(topicos);
+		}
+	}
+	
+	/*
+	 * Com esta anotação, a resposta do servidor vai ser 
+	 * guardada em cache (atenção, deve ser do pacote spring).
+	 * 
+	 * Cada método precisa de um identificador único, para que o spring
+	 * saiba quem é quem na memória. Desta forma, usamos o parâmetro value
+	 * com uma String, que é o identificador 
+	*/
+	@GetMapping("/ordenadocomcache")
+	@Cacheable(value="ListaTopicosCache")
+	public Page<TopicoDto> lista(@RequestParam(required = false) String nomeCurso, 
+			@RequestParam int qtd, @RequestParam int page, 
+			@RequestParam(required = false) String nenhumParametro1, 
+			@RequestParam(required = false) String nenhumParametro2) {
+		/*
+		 * O SpringData possui a interface Paginable, que pode
+		 * ser extendida do objeto Page, que serve para indicar a paginação.
+		 * Dentro dele, há a lista de resultados e os atribtos da 
+		 * paginação, como a página atual, quantidade de 
+		 * dados por page, etc.
+		 */
+		Pageable paginacao = PageRequest.of(page, qtd);
 		
 		if (nomeCurso == null) {			
 			Page<Topico> topicos = topicoRepository.findAll(paginacao);
