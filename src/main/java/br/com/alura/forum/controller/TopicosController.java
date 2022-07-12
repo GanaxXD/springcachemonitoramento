@@ -8,6 +8,7 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -155,6 +156,27 @@ public class TopicosController {
 		return ResponseEntity.created(uri).body(new TopicoDto(topico));
 	}
 	
+	/*
+	 * Invalidando cahce. 
+	 * Quando o suuário atualizar, criar ou deletar um registro no banco,
+	 * o cache antigo deve ser invalidado. Isso significa que ele 
+	 * deve ser limpo e refeito o registro do cache.
+	 * Para isso, há a anotação em Spring @CacheEvict,
+	 * passando por parâmetro qual o id do cache que deve ser apagado (value)
+	 * e um boleando para o spring saber se ele deve ou não
+	 * apagar os registros do cache (allEntries)
+	 */
+	@PostMapping
+	@Transactional
+	@CacheEvict(value="ListaTopicosCache", allEntries = true)
+	public ResponseEntity<TopicoDto> cadastrarAlterandoOCache(@RequestBody @Valid TopicoForm form, UriComponentsBuilder uriBuilder) {
+		Topico topico = form.converter(cursoRepository);
+		topicoRepository.save(topico);
+		
+		URI uri = uriBuilder.path("/topicos/{id}").buildAndExpand(topico.getId()).toUri();
+		return ResponseEntity.created(uri).body(new TopicoDto(topico));
+	}
+	
 	@GetMapping("/{id}")
 	public ResponseEntity<DetalhesDoTopicoDto> detalhar(@PathVariable Long id) {
 		Optional<Topico> topico = topicoRepository.findById(id);
@@ -177,6 +199,29 @@ public class TopicosController {
 		return ResponseEntity.notFound().build();
 	}
 	
+	/*
+	 * Invalidando cahce. 
+	 * Quando o suuário atualizar, criar ou deletar um registro no banco,
+	 * o cache antigo deve ser invalidado. Isso significa que ele 
+	 * deve ser limpo e refeito o registro do cache.
+	 * Para isso, há a anotação em Spring @CacheEvict,
+	 * passando por parâmetro qual o id do cache que deve ser apagado (value)
+	 * e um boleando para o spring saber se ele deve ou não
+	 * apagar os registros do cache (allEntries)
+	 */
+	@PutMapping("/{id}")
+	@Transactional
+	@CacheEvict(value="ListaTopicosCache", allEntries = true)
+	public ResponseEntity<TopicoDto> atualizarAlterandoOCache(@PathVariable Long id, @RequestBody @Valid AtualizacaoTopicoForm form) {
+		Optional<Topico> optional = topicoRepository.findById(id);
+		if (optional.isPresent()) {
+			Topico topico = form.atualizar(id, topicoRepository);
+			return ResponseEntity.ok(new TopicoDto(topico));
+		}
+		
+		return ResponseEntity.notFound().build();
+	}
+	
 	@DeleteMapping("/{id}")
 	@Transactional
 	public ResponseEntity<?> remover(@PathVariable Long id) {
@@ -188,7 +233,29 @@ public class TopicosController {
 		
 		return ResponseEntity.notFound().build();
 	}
-
+	
+	/*
+	 * Invalidando cahce. 
+	 * Quando o suuário atualizar, criar ou deletar um registro no banco,
+	 * o cache antigo deve ser invalidado. Isso significa que ele 
+	 * deve ser limpo e refeito o registro do cache.
+	 * Para isso, há a anotação em Spring @CacheEvict,
+	 * passando por parâmetro qual o id do cache que deve ser apagado (value)
+	 * e um boleando para o spring saber se ele deve ou não
+	 * apagar os registros do cache (allEntries)
+	 */
+	@DeleteMapping("/{id}")
+	@Transactional
+	@CacheEvict(value="ListaTopicosCache", allEntries = true)
+	public ResponseEntity<?> removerAlterandoOCache(@PathVariable Long id) {
+		Optional<Topico> optional = topicoRepository.findById(id);
+		if (optional.isPresent()) {
+			topicoRepository.deleteById(id);
+			return ResponseEntity.ok().build();
+		}
+		
+		return ResponseEntity.notFound().build();
+	}
 }
 
 
