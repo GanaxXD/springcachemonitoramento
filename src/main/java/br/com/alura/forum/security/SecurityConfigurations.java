@@ -1,8 +1,10 @@
 package br.com.alura.forum.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -10,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /*
  * A classe WebSecurityConfigureAdapter possui um método
@@ -36,6 +39,24 @@ public class SecurityConfigurations extends WebSecurityConfigurerAdapter{
 	@Autowired
 	private AutenticacaoService autenticacaoService;
 	
+	/*
+	 * Na classe "AutenticacaoController", para criar a lógica
+	 * da autenticação, eu preciso injetar um objeto do tipo
+	 * AuthenticationManager na classe referida.
+	 * Contudo, o Spring pro algum motivo não injeta a dependencia automaticamente.
+	 * Mas a classe WebSecurityConfigureAdapter tem um método que gera 
+	 * um AuthenticationManager, por isso, vamos aproveitar que essa classe
+	 * herda da WebSecurityConfigurerAdapter e vamos sobreescrever
+	 * o método, anotando-o com @Bean, para que o Spring saiba
+	 * que ele ficará disponível para o servidor da aplicação no início do 
+	 * em que o projeto começar a rodar.
+	 */
+	@Override
+	@Bean
+	protected AuthenticationManager authenticationManager() throws Exception {
+		return super.authenticationManager();
+	}
+	
 	//Configura autenticação
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -56,12 +77,14 @@ public class SecurityConfigurations extends WebSecurityConfigurerAdapter{
 		//Após o comentário 'and().formLogin()' se inicia a 
 		//fase statless das requisições da api
 		http.authorizeRequests().
-			antMatchers(HttpMethod.GET, "/topicos").permitAll().
-			antMatchers(HttpMethod.GET, "topicos/*").permitAll().
-			anyRequest().authenticated().
-			//and().formLogin();
-			and().csrf().disable().
-			sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+			antMatchers(HttpMethod.GET, "/topicos").permitAll(). //permite qualquer get em /tópicos
+			antMatchers(HttpMethod.GET, "topicos/*").permitAll(). //permite qualquer get em /tópiccos passando qualquer coisa na url, mesmo sem autenticação
+			anyRequest().authenticated(). //qualquer outra requisição precisa ser autenticada
+			//and().formLogin(); //exibindo form de login padrão do spring
+			and().csrf().disable(). //Desabilitando o csrf, uma vez que o servidor é stateless
+			sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) //Sessão stateless
+			.and()
+			.addFilterBefore(new AutenticacaoViaTokenFilter(), UsernamePasswordAuthenticationFilter.class); //Passando o filtro que eu criei para ser executado depois do filtro padrão do spring
 	}
 	
 	//Configura acesso aos arquivos estáticos (html, css, imagens, etc)
