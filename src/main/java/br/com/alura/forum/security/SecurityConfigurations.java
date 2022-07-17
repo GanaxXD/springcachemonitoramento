@@ -14,6 +14,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import br.com.alura.forum.repository.UsuarioRepository;
+
 /*
  * A classe WebSecurityConfigureAdapter possui um método
  * de configuração de segurança com 3 sobrecargas:
@@ -38,6 +40,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfigurations extends WebSecurityConfigurerAdapter{
 	@Autowired
 	private AutenticacaoService autenticacaoService;
+	
+	@Autowired
+	private TokenService tokenService;
+	
+	@Autowired
+	private UsuarioRepository repository;
 	
 	/*
 	 * Na classe "AutenticacaoController", para criar a lógica
@@ -67,6 +75,7 @@ public class SecurityConfigurations extends WebSecurityConfigurerAdapter{
 	//Configura autorizações aos endpoints
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+	
 		//Neste exemplo, serão aceitos qualquer requisição
 		//get, independente de estarem logados, bem como qualquer
 		//requisição topicos/qualquer-coisa.
@@ -78,13 +87,14 @@ public class SecurityConfigurations extends WebSecurityConfigurerAdapter{
 		//fase statless das requisições da api
 		http.authorizeRequests().
 			antMatchers(HttpMethod.GET, "/topicos").permitAll(). //permite qualquer get em /tópicos
-			antMatchers(HttpMethod.GET, "topicos/*").permitAll(). //permite qualquer get em /tópiccos passando qualquer coisa na url, mesmo sem autenticação
+			antMatchers(HttpMethod.GET, "/topicos/*").permitAll(). //permite qualquer get em /tópiccos passando qualquer coisa na url, mesmo sem autenticação
+			antMatchers(HttpMethod.GET, "/actuator").permitAll(). //PERMITE O MONITORAMENTO. EM TESTES, DEIXAR O permitAll(), MAS JAMAIS, JAMAIS EM PRODUÇÃO, POIS DADOS SENSÍVEIS SÃO MOSTRADOS
 			anyRequest().authenticated(). //qualquer outra requisição precisa ser autenticada
 			//and().formLogin(); //exibindo form de login padrão do spring
 			and().csrf().disable(). //Desabilitando o csrf, uma vez que o servidor é stateless
 			sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) //Sessão stateless
 			.and()
-			.addFilterBefore(new AutenticacaoViaTokenFilter(), UsernamePasswordAuthenticationFilter.class); //Passando o filtro que eu criei para ser executado depois do filtro padrão do spring
+			.addFilterBefore(new AutenticacaoViaTokenFilter(tokenService, repository), UsernamePasswordAuthenticationFilter.class); //Passando o filtro que eu criei para ser executado depois do filtro padrão do spring
 	}
 	
 	//Configura acesso aos arquivos estáticos (html, css, imagens, etc)
