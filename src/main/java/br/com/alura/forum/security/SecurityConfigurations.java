@@ -88,7 +88,7 @@ public class SecurityConfigurations extends WebSecurityConfigurerAdapter{
 		http.authorizeRequests().
 			antMatchers(HttpMethod.GET, "/topicos").permitAll(). //permite qualquer get em /tópicos
 			antMatchers(HttpMethod.GET, "/topicos/*").permitAll(). //permite qualquer get em /tópiccos passando qualquer coisa na url, mesmo sem autenticação
-			antMatchers(HttpMethod.GET, "/actuator").permitAll(). //PERMITE O MONITORAMENTO. EM TESTES, DEIXAR O permitAll(), MAS JAMAIS, JAMAIS EM PRODUÇÃO, POIS DADOS SENSÍVEIS SÃO MOSTRADOS
+			antMatchers(HttpMethod.GET, "/actuator/**").permitAll(). //PERMITE O MONITORAMENTO. EM TESTES, DEIXAR O permitAll(), MAS JAMAIS, JAMAIS EM PRODUÇÃO, POIS DADOS SENSÍVEIS SÃO MOSTRADOS
 			anyRequest().authenticated(). //qualquer outra requisição precisa ser autenticada
 			//and().formLogin(); //exibindo form de login padrão do spring
 			and().csrf().disable(). //Desabilitando o csrf, uma vez que o servidor é stateless
