@@ -19,6 +19,24 @@
 	</properties>
 
 	<dependencies>
+		<!-- Adicionando SpringFox (lib externa que NÃO É do spring) para usar o Swagger num projeto Java com Spring-->
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+		
+		<!-- Adicionando o monitormento-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		
 		<!-- Adicionando a cache e o provedor de cache não foi instalado. Na produção, devemos instalar um-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
